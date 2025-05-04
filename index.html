@@ -487,9 +487,11 @@
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-        import { TextGeometry } from 'three/geometries/TextGeometry.js';
+        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+        // --- Corrected Addon Import ---
         import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
         // No need for the 'three/src/' imports here
+
         // Scene Setup
         const scene = new THREE.Scene();
         const canvas = document.getElementById('three-canvas');
@@ -497,7 +499,6 @@
         let textMesh = null;
         // Use THREE.TextureLoader because TextureLoader is part of the core THREE object
         const textureLoader = new THREE.TextureLoader();
-
 
         try {
             renderer = new THREE.WebGLRenderer({
