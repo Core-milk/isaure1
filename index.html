@@ -400,15 +400,14 @@
     </style>
 
     <!-- Import Map for Three.js Modules -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.163.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.163.0/examples/jsm/"
-                "three/geometries/":"https://app.unpkg.com/three@0.163.0/files/examples/jsm/geometries"
-            }
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.163.0/examples/jsm/"
         }
-    </script>
+    }
+</script>
 
 </head>
 <body>
@@ -480,7 +479,6 @@
     </div>
 
     <!-- Embedded Three.js Script (Module Type) -->
-    <script type="module">
     <script type="module">
         import * as THREE from 'three'; // Imports the core library
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
