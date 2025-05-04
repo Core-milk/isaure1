@@ -487,34 +487,39 @@
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { FontLoader } from 'three/addons/loaders/FontLoader.js';
         import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+        // --- NEW IMPORTS ---
+        import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
+        import { TextureLoader } from 'three/src/loaders/TextureLoader.js'; // Explicit import
+        import { TubeGeometry } from 'three/src/geometries/TubeGeometry.js';
+        import { CatmullRomCurve3 } from 'three/src/extras/curves/CatmullRomCurve3.js';
+        import { ExtrudeGeometry } from 'three/src/geometries/ExtrudeGeometry.js';
+        import { Shape } from 'three/src/extras/core/Shape.js';
 
         // Scene Setup
         const scene = new THREE.Scene();
         const canvas = document.getElementById('three-canvas');
         let renderer, composer, bloomPass;
         let textMesh = null;
+        const textureLoader = new TextureLoader(); // Instantiate loader
 
         try {
             renderer = new THREE.WebGLRenderer({
                 canvas: canvas,
-                antialias: true, // Enable basic anti-aliasing
+                antialias: true,
                 alpha: true,
                 powerPreference: "high-performance"
             });
-            // --- MODIFICATION: Use full device pixel ratio for potentially higher res rendering ---
-            // Note: Can impact performance on high-DPI screens. Keep Math.min(..., 2) for balance if needed.
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.outputEncoding = THREE.sRGBEncoding; // Correct color space
-            renderer.toneMapping = THREE.ACESFilmicToneMapping; // Better contrast and highlights
-            renderer.toneMappingExposure = 1.2;
-
-            // --- MODIFICATION: Enable Shadow Mapping ---
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.25; // Slightly increased exposure for vibrancy
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadow edges
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         } catch (error) {
             console.error("WebGL is not supported or renderer initialization failed:", error);
+            // Fallback message display logic (same as before)
             const overlay = document.querySelector('.content-overlay');
             if (overlay) overlay.style.display = 'none';
             document.body.innerHTML = "<div style='color:white; text-align:center; padding: 50px; font-size: 1.2em; font-family: sans-serif;'>抱歉，您的设备似乎不支持创建这个3D效果所需的技术(WebGL)。<br>但这份生日祝福的心意不变！生日快乐，Isaure！</div>" + (overlay ? overlay.outerHTML : '');
@@ -523,284 +528,356 @@
         }
 
         // Camera
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
-        camera.position.set(0, 15, 70);
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 3000); // Increased far plane for nebula
+        camera.position.set(0, 20, 85); // Adjusted camera start
 
-        // Enhanced Controls
+        // Controls
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.04;
         controls.enableZoom = true;
         controls.zoomSpeed = 0.6;
-        controls.enablePan = false; // Keep pan disabled for this effect
-        controls.minDistance = 25;
-        controls.maxDistance = 180;
+        controls.enablePan = false;
+        controls.minDistance = 30;
+        controls.maxDistance = 250; // Allow zooming out further
         controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.4;
-        controls.maxPolarAngle = Math.PI * 0.85;
-        controls.minPolarAngle = Math.PI * 0.15;
+        controls.autoRotateSpeed = 0.35; // Slightly slower auto-rotate
+        controls.maxPolarAngle = Math.PI * 0.88;
+        controls.minPolarAngle = Math.PI * 0.12;
 
-        // Enhanced Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Slightly reduced ambient intensity
+        // --- Enhanced Lighting & Lens Flares ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.65); // Slightly brighter ambient
         scene.add(ambientLight);
 
-        const pointLight1 = new THREE.PointLight(0xff69b4, 450, 350, 1.8); // Pink
-        pointLight1.position.set(80, 60, 80);
-        // --- MODIFICATION: Enable Shadow Casting for this light ---
+        // --- Placeholder Textures - REPLACE THESE URLS! ---
+        const texFlare1 = textureLoader.load( '/path/to/lensflare0.png' ); // Circle glow
+        const texFlare2 = textureLoader.load( '/path/to/lensflare2.png' ); // Generic flare
+        const texFlare3 = textureLoader.load( '/path/to/lensflare3.png' ); // Hexagonal flare
+
+        // Pink Light + Flare
+        const pointLight1 = new THREE.PointLight(0xff69b4, 500, 400, 1.7); // Adjusted params
+        pointLight1.position.set(90, 70, 90);
         pointLight1.castShadow = true;
-        pointLight1.shadow.mapSize.width = 1024; // Shadow map resolution (power of 2)
+        pointLight1.shadow.mapSize.width = 1024;
         pointLight1.shadow.mapSize.height = 1024;
-        pointLight1.shadow.camera.near = 10;    // Adjust shadow camera frustum
-        pointLight1.shadow.camera.far = 400;
+        pointLight1.shadow.camera.near = 10;
+        pointLight1.shadow.camera.far = 450;
+        pointLight1.shadow.bias = -0.002; // Fine-tune bias
         scene.add(pointLight1);
+        addLensflare(pointLight1, 0.6, texFlare1, texFlare3); // Add flare to this light
 
-        const pointLight2 = new THREE.PointLight(0xdda0dd, 350, 300, 1.8); // Plum
-        pointLight2.position.set(-80, -60, 60);
-        // pointLight2.castShadow = true; // Optional: Enable shadows for more lights (costly)
+        // Plum Light + Flare
+        const pointLight2 = new THREE.PointLight(0xdda0dd, 400, 350, 1.8);
+        pointLight2.position.set(-90, -70, 70);
+        // pointLight2.castShadow = true; // Optional shadows
         scene.add(pointLight2);
+        addLensflare(pointLight2, 0.4, texFlare1, texFlare3); // Add flare
 
-        const pointLight3 = new THREE.PointLight(0xffd700, 300, 300, 1.8); // Gold
-        pointLight3.position.set(0, -70, 120);
-        // pointLight3.castShadow = true; // Optional
+        // Gold Light + Flare
+        const pointLight3 = new THREE.PointLight(0xffd700, 350, 350, 1.8);
+        pointLight3.position.set(0, -80, 140);
+        // pointLight3.castShadow = true; // Optional shadows
         scene.add(pointLight3);
+        addLensflare(pointLight3, 0.5, texFlare1, texFlare2); // Add flare
 
-        // Add light halos (these don't cast shadows)
-        const lightHalo1 = createLightHalo(0xff69b4, 18);
-        lightHalo1.position.copy(pointLight1.position);
-        scene.add(lightHalo1);
-        const lightHalo2 = createLightHalo(0xdda0dd, 15);
-        lightHalo2.position.copy(pointLight2.position);
-        scene.add(lightHalo2);
-        const lightHalo3 = createLightHalo(0xffd700, 12);
-        lightHalo3.position.copy(pointLight3.position);
-        scene.add(lightHalo3);
+        // Helper function to add lens flares
+        function addLensflare(light, scale, tex1, tex2) {
+            const lensflare = new Lensflare();
+            // Main glow
+            lensflare.addElement( new LensflareElement( tex1, 512 * scale, 0, light.color.clone().multiplyScalar(0.8) ) );
+            // Smaller hexagonal elements
+            lensflare.addElement( new LensflareElement( tex2, 60 * scale, 0.6 ) );
+            lensflare.addElement( new LensflareElement( tex2, 70 * scale, 0.7 ) );
+            lensflare.addElement( new LensflareElement( tex2, 120 * scale, 0.9 ) );
+            lensflare.addElement( new LensflareElement( tex2, 70 * scale, 1 ) );
+            light.add( lensflare ); // Attach flare to the light source
+        }
 
-        function createLightHalo(color, size) {
+        // Light Halos (same as before)
+        const lightHalo1 = createLightHalo(0xff69b4, 20); lightHalo1.position.copy(pointLight1.position); scene.add(lightHalo1);
+        const lightHalo2 = createLightHalo(0xdda0dd, 17); lightHalo2.position.copy(pointLight2.position); scene.add(lightHalo2);
+        const lightHalo3 = createLightHalo(0xffd700, 15); lightHalo3.position.copy(pointLight3.position); scene.add(lightHalo3);
+        function createLightHalo(color, size) { /* ... (same function as before) ... */
             const geometry = new THREE.SphereGeometry(size, 32, 16);
-            const material = new THREE.MeshBasicMaterial({ // Basic material ignores light/shadow
-                color: color,
-                transparent: true,
-                opacity: 0.15,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
-            });
+            const material = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending, depthWrite: false });
             return new THREE.Mesh(geometry, material);
         }
 
-        // Post-processing Effects
+
+        // Post-processing (Bloom)
         composer = new EffectComposer(renderer);
         const renderPass = new RenderPass(scene, camera);
         composer.addPass(renderPass);
-
-        bloomPass = new UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
-            1.3, // strength
-            0.5, // radius
-            0.75 // threshold
-        );
+        bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.45, 0.6, 0.65); // Adjusted bloom params
         composer.addPass(bloomPass);
 
 
-        // Create a galaxy of particles (Particles generally don't cast/receive shadows well)
-        const particleCount = 15000;
-        const particlesGeometry = new THREE.BufferGeometry();
-        const posArray = new Float32Array(particleCount * 3);
-        const colorArray = new Float32Array(particleCount * 3);
-        const sizeArray = new Float32Array(particleCount);
+        // --- NEW: Nebula Background ---
+        const nebulaTexture = textureLoader.load('/path/to/nebula.jpg'); // <<< REPLACE URL!
+        nebulaTexture.wrapS = THREE.RepeatWrapping; // Optional: Tiling if needed
+        nebulaTexture.wrapT = THREE.RepeatWrapping;
+        const nebulaMaterial = new THREE.MeshBasicMaterial({
+            map: nebulaTexture,
+            side: THREE.BackSide, // Render on the inside of the sphere
+            fog: false // Ignore scene fog
+        });
+        const nebulaGeometry = new THREE.SphereGeometry(1500, 64, 32); // Large sphere
+        const nebulaMesh = new THREE.Mesh(nebulaGeometry, nebulaMaterial);
+        nebulaMesh.rotation.y = Math.PI / 4; // Initial rotation
+        scene.add(nebulaMesh);
 
-        const colorPalette = [
+
+        // Particle System 1: Galaxy (same core logic, adjusted params)
+        const particleCount1 = 20000; // More particles
+        const particlesGeometry1 = new THREE.BufferGeometry();
+        // ... (Arrays: posArray1, colorArray1, sizeArray1) ...
+        const posArray1 = new Float32Array(particleCount1 * 3);
+        const colorArray1 = new Float32Array(particleCount1 * 3);
+        const sizeArray1 = new Float32Array(particleCount1);
+        const colorPalette = [ /* ... (same colors) ... */
             new THREE.Color(0xff69b4), new THREE.Color(0xdda0dd), new THREE.Color(0xffd700),
             new THREE.Color(0x9370db), new THREE.Color(0xffffff)
         ];
-
-        for(let i = 0; i < particleCount; i++) {
-            // ... (particle position, color, size calculation - same as before) ...
+        for(let i = 0; i < particleCount1; i++) {
             const i3 = i * 3;
-            const radius = 180 + Math.random() * 400;
+            const radius = 180 + Math.random() * 600; // Wider spread
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
-            posArray[i3] = radius * Math.sin(phi) * Math.cos(theta);
-            posArray[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-            posArray[i3 + 2] = radius * Math.cos(phi);
+            posArray1[i3] = radius * Math.sin(phi) * Math.cos(theta);
+            posArray1[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            posArray1[i3 + 2] = radius * Math.cos(phi);
             const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
             const finalColor = Math.random() < 0.3 ? (Math.random() < 0.5 ? colorPalette[4] : colorPalette[2]) : color;
-            colorArray[i3] = finalColor.r;
-            colorArray[i3 + 1] = finalColor.g;
-            colorArray[i3 + 2] = finalColor.b;
-            sizeArray[i] = Math.random() * 2.8 + 0.7;
+            colorArray1[i3] = finalColor.r; colorArray1[i3 + 1] = finalColor.g; colorArray1[i3 + 2] = finalColor.b;
+            sizeArray1[i] = Math.random() * 3.2 + 0.9; // Slightly larger range
         }
+        particlesGeometry1.setAttribute('position', new THREE.BufferAttribute(posArray1, 3));
+        particlesGeometry1.setAttribute('color', new THREE.BufferAttribute(colorArray1, 3));
+        particlesGeometry1.setAttribute('size', new THREE.BufferAttribute(sizeArray1, 1));
+        const particleMaterial1 = new THREE.PointsMaterial({ /* ... (same material setup) ... */
+            vertexColors: true, transparent: true, blending: THREE.AdditiveBlending,
+            sizeAttenuation: true, map: createSparkleTexture(), depthWrite: false, alphaTest: 0.01
+        });
+        const particleSystem1 = new THREE.Points(particlesGeometry1, particleMaterial1);
+        scene.add(particleSystem1);
 
-        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
-        particlesGeometry.setAttribute('size', new THREE.BufferAttribute(sizeArray, 1));
 
-        const particleMaterial = new THREE.PointsMaterial({
+        // --- NEW: Particle System 2 (Ambient Dust/Sparkles) ---
+        const particleCount2 = 15000;
+        const particlesGeometry2 = new THREE.BufferGeometry();
+        const posArray2 = new Float32Array(particleCount2 * 3);
+        const colorArray2 = new Float32Array(particleCount2 * 3);
+        const sizeArray2 = new Float32Array(particleCount2);
+        const dustColor1 = new THREE.Color(0xffffff);
+        const dustColor2 = new THREE.Color(0xffeecc); // Warm white
+
+        for(let i = 0; i < particleCount2; i++) {
+            const i3 = i * 3;
+            // Closer, denser distribution
+            const radius = 20 + Math.random() * 150; // Range: 20 to 170
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            posArray2[i3] = radius * Math.sin(phi) * Math.cos(theta);
+            posArray2[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            posArray2[i3 + 2] = radius * Math.cos(phi);
+            // Mostly white/pale colors
+            const color = Math.random() > 0.5 ? dustColor1 : dustColor2;
+            colorArray2[i3] = color.r; colorArray2[i3 + 1] = color.g; colorArray2[i3 + 2] = color.b;
+            // Smaller sizes
+            sizeArray2[i] = Math.random() * 1.5 + 0.3; // Range: 0.3 to 1.8
+        }
+        particlesGeometry2.setAttribute('position', new THREE.BufferAttribute(posArray2, 3));
+        particlesGeometry2.setAttribute('color', new THREE.BufferAttribute(colorArray2, 3));
+        particlesGeometry2.setAttribute('size', new THREE.BufferAttribute(sizeArray2, 1));
+        const particleMaterial2 = new THREE.PointsMaterial({
             vertexColors: true,
             transparent: true,
             blending: THREE.AdditiveBlending,
             sizeAttenuation: true,
-            map: createSparkleTexture(),
-            depthWrite: false, // Important for blending
-            alphaTest: 0.01
+            map: createSparkleTexture(), // Can use the same texture or a different one
+            depthWrite: false,
+            alphaTest: 0.01,
+            opacity: 0.7 // Slightly less opaque
         });
+        const particleSystem2 = new THREE.Points(particlesGeometry2, particleMaterial2);
+        scene.add(particleSystem2);
 
-        const particleSystem = new THREE.Points(particlesGeometry, particleMaterial);
-        scene.add(particleSystem);
 
-        // Create floating 3D text
+        // Sparkle Texture Function (same as before)
+        function createSparkleTexture() { /* ... (same function as before) ... */
+            const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128;
+            const context = canvas.getContext('2d'); if (!context) return null;
+            const gradient = context.createRadialGradient(64, 64, 0, 64, 64, 64);
+            gradient.addColorStop(0, 'rgba(255,255,255,1)'); gradient.addColorStop(0.15, 'rgba(255,255,255,0.9)');
+            gradient.addColorStop(0.4, 'rgba(255,255,255,0.3)'); gradient.addColorStop(1, 'rgba(255,255,255,0)');
+            context.fillStyle = gradient; context.fillRect(0, 0, 128, 128);
+            const texture = new THREE.Texture(canvas); texture.needsUpdate = true; return texture;
+        }
+
+        // Floating 3D Text (same as before)
         const textLoader = new FontLoader();
-        textLoader.load(
-            'https://unpkg.com/three@0.163.0/examples/fonts/helvetiker_regular.typeface.json',
-            function ( font ) {
-                const textGeometry = new TextGeometry( 'Happy Birthday', {
-                    font: font,
-                    size: 8,
-                    height: 1.5, // Depth of the text
-                    curveSegments: 16, // Increased smoothness
-                    bevelEnabled: true,
-                    bevelThickness: 0.6,
-                    bevelSize: 0.3,
-                    bevelOffset: 0,
-                    bevelSegments: 8 // Increased bevel smoothness
-                });
-                textGeometry.center(); // Center the geometry origin
-                // --- MODIFICATION: Use MeshStandardMaterial for light interaction ---
-                const textMaterial = new THREE.MeshStandardMaterial({
-                    color: 0xff69b4, // Base color
-                    emissive: 0xdda0dd, // Glow color
-                    emissiveIntensity: 0.3, // Reduced intensity, let light do more work
-                    metalness: 0.4, // Make it slightly metallic
-                    roughness: 0.5, // Control shininess
-                });
-                textMesh = new THREE.Mesh( textGeometry, textMaterial );
-                textMesh.position.set(0, 0, -20); // Position closer to camera
-                // --- MODIFICATION: Enable Shadow Casting for Text ---
-                textMesh.castShadow = true;
-                // textMesh.receiveShadow = true; // Optional: text can receive shadows too
-                scene.add( textMesh );
-            },
-            function ( xhr ) { console.log( (xhr.loaded / xhr.total * 100) + '% font loaded' ); },
-            function ( err ) { console.error( 'An error happened during font loading:', err ); }
-        );
+        textLoader.load('https://unpkg.com/three@0.163.0/examples/fonts/helvetiker_regular.typeface.json', font => {
+            const textGeometry = new TextGeometry('Happy Birthday', { /* ... (same settings) ... */
+                 font: font, size: 8, height: 1.5, curveSegments: 16,
+                 bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.3, bevelOffset: 0, bevelSegments: 8
+            });
+            textGeometry.center();
+            const textMaterial = new THREE.MeshStandardMaterial({ /* ... (same material) ... */
+                color: 0xff69b4, emissive: 0xdda0dd, emissiveIntensity: 0.35, // Slightly brighter emissive
+                metalness: 0.4, roughness: 0.5, flatShading: false
+            });
+            textMesh = new THREE.Mesh(textGeometry, textMaterial);
+            textMesh.position.set(0, 5, -15); // Adjusted position
+            textMesh.castShadow = true;
+            scene.add(textMesh);
+        }, xhr => console.log((xhr.loaded / xhr.total * 100) + '% font loaded'), err => console.error('Font loading error:', err));
 
 
-        // Create floating shapes (True 3D Models)
+        // Floating Shapes (same logic, more shapes)
         const shapesGroup = new THREE.Group();
-        const shapeGeometries = [
-             new THREE.IcosahedronGeometry(3.5, 1), // Increased detail
-             new THREE.TorusKnotGeometry(2.5, 0.8, 128, 16), // Increased detail
-             new THREE.OctahedronGeometry(3, 1) // Increased detail
-             // Add more complex geometries if desired:
-             // new THREE.DodecahedronGeometry(3, 0),
-             // new THREE.TorusGeometry(2.5, 1, 16, 100)
+        const shapeGeometries = [ /* ... (same geometries) ... */
+             new THREE.IcosahedronGeometry(3.5, 1), new THREE.TorusKnotGeometry(2.5, 0.8, 128, 16),
+             new THREE.OctahedronGeometry(3, 1), new THREE.DodecahedronGeometry(3.2, 0),
+             new THREE.TorusGeometry(2.8, 1, 20, 60)
         ];
-        const shapesCount = 35;
-
+        const shapesCount = 55; // Increased count
         for(let i = 0; i < shapesCount; i++) {
              const geometry = shapeGeometries[i % shapeGeometries.length];
-             // --- MODIFICATION: Consistently use MeshStandardMaterial ---
-             const material = new THREE.MeshStandardMaterial({
+             const material = new THREE.MeshStandardMaterial({ /* ... (same material setup) ... */
                 color: colorPalette[Math.floor(Math.random() * colorPalette.length)],
-                // emissive: 0x050505, // Very slight self-glow if desired
-                metalness: Math.random() * 0.6, // Variable metalness
-                roughness: Math.random() * 0.7 + 0.1, // Variable roughness (0=shiny, 1=matte)
-                transparent: true,
-                opacity: 0.88 + Math.random() * 0.12, // Slightly less transparent
-                // wireframe: Math.random() > 0.9 // Less wireframe, make them solid
-            });
+                metalness: Math.random() * 0.7, roughness: Math.random() * 0.6 + 0.2,
+                transparent: true, opacity: 0.9 + Math.random() * 0.1,
+             });
             const shape = new THREE.Mesh(geometry, material);
-            const radius = 50 + Math.random() * 80;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            shape.position.set(
-                radius * Math.sin(phi) * Math.cos(theta),
-                radius * Math.sin(phi) * Math.sin(theta),
-                radius * Math.cos(phi)
-            );
-
-            // --- MODIFICATION: Enable Shadow Casting for Shapes ---
+            const radius = 70 + Math.random() * 120; // Adjusted distribution range
+            const theta = Math.random() * Math.PI * 2; const phi = Math.acos(2 * Math.random() - 1);
+            shape.position.set(radius * Math.sin(phi) * Math.cos(theta), radius * Math.sin(phi) * Math.sin(theta), radius * Math.cos(phi));
+            shape.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
             shape.castShadow = true;
-            // shape.receiveShadow = true; // Optional: shapes can receive shadows (can be costly)
-
-            shape.userData = {
-                orbitSpeed: (Math.random() - 0.5) * 0.01,
-                rotationSpeed: (Math.random() - 0.5) * 0.025,
-                bobSpeed: Math.random() * 0.8 + 0.4,
-                amplitude: Math.random() * 4 + 2,
-                initialPosition: shape.position.clone()
+            shape.userData = { /* ... (same animation data structure) ... */
+                orbitSpeed: (Math.random() - 0.5) * 0.012, rotationSpeed: (Math.random() - 0.5) * 0.03,
+                bobSpeed: Math.random() * 0.9 + 0.5, amplitude: Math.random() * 5 + 2,
+                initialY: shape.position.y
             };
             shapesGroup.add(shape);
         }
         scene.add(shapesGroup);
 
-        // --- Balloons Setup ---
+
+        // --- NEW: Floating Stars ---
+        const starsGroup = new THREE.Group();
+        const starShape = new THREE.Shape();
+        const outerRadius = 2.5;
+        const innerRadius = 1.2;
+        const numPoints = 5;
+        starShape.moveTo(0, outerRadius);
+        for (let i = 0; i < numPoints * 2; i++) {
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const angle = (i / (numPoints * 2)) * Math.PI * 2;
+            starShape.lineTo(Math.sin(angle) * radius, Math.cos(angle) * radius);
+        }
+        const extrudeSettings = { depth: 0.5, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.1, bevelThickness: 0.1 };
+        const starGeometry = new THREE.ExtrudeGeometry(starShape, extrudeSettings);
+        starGeometry.center(); // Center the geometry
+
+        const starMaterials = [
+            new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.6, roughness: 0.4, emissive: 0xccaa00, emissiveIntensity: 0.3 }), // Gold
+            new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.5, roughness: 0.5, emissive: 0xaaaaaa, emissiveIntensity: 0.2 }), // Silver/White
+            new THREE.MeshStandardMaterial({ color: 0xffacdf, metalness: 0.5, roughness: 0.5, emissive: 0xcc8aad, emissiveIntensity: 0.25 }) // Pinkish
+        ];
+        const starCount = 40;
+
+        for (let i = 0; i < starCount; i++) {
+            const material = starMaterials[i % starMaterials.length];
+            const star = new THREE.Mesh(starGeometry, material);
+            const radius = 50 + Math.random() * 150; // Similar distribution to shapes
+            const theta = Math.random() * Math.PI * 2; const phi = Math.acos(2 * Math.random() - 1);
+            star.position.set(radius * Math.sin(phi) * Math.cos(theta), radius * Math.sin(phi) * Math.sin(theta), radius * Math.cos(phi));
+            star.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+            star.scale.setScalar(Math.random() * 0.8 + 0.6); // Random size
+            star.castShadow = true;
+            star.userData = { // Similar animation data
+                orbitSpeed: (Math.random() - 0.5) * 0.010, rotationSpeed: (Math.random() - 0.5) * 0.035,
+                bobSpeed: Math.random() * 1.0 + 0.4, amplitude: Math.random() * 4 + 1.5,
+                initialY: star.position.y
+            };
+            starsGroup.add(star);
+        }
+        scene.add(starsGroup);
+
+
+        // --- NEW: Spiral Ribbons ---
+        const ribbonsGroup = new THREE.Group();
+        const ribbonColors = [0xff69b4, 0xdda0dd, 0xffd700, 0x87cefa, 0xffffff];
+        const numRibbons = 8;
+        const ribbonSegments = 150;
+        const ribbonRadius = 1.0; // Thickness of the ribbon tube
+
+        for (let i = 0; i < numRibbons; i++) {
+            const points = [];
+            const startRadius = 10 + Math.random() * 10;
+            const endRadius = 80 + Math.random() * 50;
+            const spirals = 3 + Math.random() * 4;
+            const height = 100 + Math.random() * 60;
+            const startY = (Math.random() - 0.5) * 40;
+            const phase = Math.random() * Math.PI * 2;
+
+            for (let j = 0; j <= ribbonSegments; j++) {
+                const t = j / ribbonSegments; // Parameter 0 to 1
+                const radius = startRadius + (endRadius - startRadius) * t;
+                const angle = phase + t * Math.PI * 2 * spirals;
+                const y = startY + (height * (t - 0.5)); // Goes up and down
+                points.push(new THREE.Vector3(Math.cos(angle) * radius, y, Math.sin(angle) * radius));
+            }
+
+            const curve = new THREE.CatmullRomCurve3(points);
+            const geometry = new THREE.TubeGeometry(curve, ribbonSegments, ribbonRadius, 12, false); // 12 radial segments
+            const material = new THREE.MeshStandardMaterial({
+                color: ribbonColors[i % ribbonColors.length],
+                metalness: 0.3,
+                roughness: 0.6,
+                side: THREE.DoubleSide // Render both sides
+            });
+            const ribbon = new THREE.Mesh(geometry, material);
+            ribbon.castShadow = true;
+            ribbonsGroup.add(ribbon);
+        }
+        ribbonsGroup.rotation.x = 0.2; // Slight tilt
+        scene.add(ribbonsGroup);
+
+
+        // Floating Balloons (same logic, more balloons)
         const balloonsGroup = new THREE.Group();
-        const balloonCount = 25;
-        const balloonColors = [0xff69b4, 0xdda0dd, 0xffd700, 0x87cefa, 0x98fb98];
-        const balloonSpawnArea = 150;
-        const balloonMaxHeight = 250;
-        const balloonMinHeight = -150;
-
-        // --- Create Balloons Function ---
+        const balloonCount = 40; // Increased count
+        const balloonColors = [ /* ... (same colors + more) ... */
+            0xff69b4, 0xdda0dd, 0xffd700, 0x87cefa, 0x98fb98, 0xffa07a, 0xa0e0e0, 0xffc0cb
+        ];
+        const balloonSpawnArea = 200; // Wider spawn
+        const balloonMaxHeight = 300; const balloonMinHeight = -200;
         function createBalloons() {
-            const balloonGeometry = new THREE.SphereGeometry(2.5, 32, 24); // Increased segments
-            balloonGeometry.scale(1, 1.25, 1); // Slightly taller
-
+            const balloonGeometry = new THREE.SphereGeometry(3.0, 32, 24); // Slightly larger
+            balloonGeometry.scale(1, 1.2, 1);
             for (let i = 0; i < balloonCount; i++) {
-                 // --- MODIFICATION: Use MeshStandardMaterial for better lighting ---
-                const balloonMaterial = new THREE.MeshStandardMaterial({
+                 const balloonMaterial = new THREE.MeshStandardMaterial({ /* ... (same material setup) ... */
                     color: balloonColors[Math.floor(Math.random() * balloonColors.length)],
-                    metalness: 0.1,  // Less metallic than shapes
-                    roughness: 0.6,  // Rougher surface, less shiny like rubber/plastic
-                    transparent: true,
-                    opacity: 0.9, // Slightly more opaque
-                    // emissive: 0x080808, // Tiny bit of self light if desired
-                });
-
+                    metalness: 0.05, roughness: 0.7, transparent: true, opacity: 0.92,
+                 });
                 const balloon = new THREE.Mesh(balloonGeometry, balloonMaterial);
-
                 balloon.position.x = (Math.random() - 0.5) * balloonSpawnArea;
                 balloon.position.z = (Math.random() - 0.5) * balloonSpawnArea;
-                balloon.position.y = balloonMinHeight + Math.random() * 100;
-
-                // --- MODIFICATION: Enable Shadow Casting for Balloons ---
+                balloon.position.y = balloonMinHeight + Math.random() * 140;
                 balloon.castShadow = true;
-                // balloon.receiveShadow = true; // Optional
-
-                balloon.userData = {
-                    baseYSpeed: Math.random() * 0.08 + 0.05,
-                    driftSpeedX: Math.random() * 0.5 + 0.2,
-                    driftSpeedZ: Math.random() * 0.5 + 0.2,
-                    driftAmplitudeX: Math.random() * 0.05 + 0.02,
-                    driftAmplitudeZ: Math.random() * 0.05 + 0.02,
-                    initialPhaseX: Math.random() * Math.PI * 2,
+                balloon.userData = { /* ... (same animation data structure) ... */
+                    baseYSpeed: Math.random() * 0.1 + 0.07, driftSpeedX: Math.random() * 0.6 + 0.3,
+                    driftSpeedZ: Math.random() * 0.6 + 0.3, driftAmplitudeX: Math.random() * 0.07 + 0.03,
+                    driftAmplitudeZ: Math.random() * 0.07 + 0.03, initialPhaseX: Math.random() * Math.PI * 2,
                     initialPhaseZ: Math.random() * Math.PI * 2
                 };
-
                 balloonsGroup.add(balloon);
             }
             scene.add(balloonsGroup);
         }
 
-
-        // Helper function to create particle texture
-        function createSparkleTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 128; // Good resolution
-            canvas.height = 128;
-            const context = canvas.getContext('2d');
-            if (!context) return null;
-            const gradient = context.createRadialGradient(64, 64, 0, 64, 64, 64);
-            gradient.addColorStop(0, 'rgba(255,255,255,1)');
-            gradient.addColorStop(0.15, 'rgba(255,255,255,0.9)');
-            gradient.addColorStop(0.4, 'rgba(255,255,255,0.3)');
-            gradient.addColorStop(1, 'rgba(255,255,255,0)');
-            context.fillStyle = gradient;
-            context.fillRect(0, 0, 128, 128);
-            const texture = new THREE.Texture(canvas);
-            texture.needsUpdate = true;
-            return texture;
-        }
 
         // Animation loop
         const clock = new THREE.Clock();
@@ -811,47 +888,61 @@
             const elapsedTime = clock.getElapsedTime();
             const deltaTime = clock.getDelta();
 
-            // Animate Particles
-            particleSystem.rotation.y = elapsedTime * 0.015;
-            particleSystem.rotation.x = elapsedTime * 0.008;
+            // Animate Nebula Background (Slow rotation)
+            nebulaMesh.rotation.y += deltaTime * 0.005;
 
-            // Animate Shapes
-            shapesGroup.children.forEach(shape => {
-                const { orbitSpeed, rotationSpeed, bobSpeed, amplitude, initialPosition } = shape.userData;
-                shape.position.applyAxisAngle(rotationAxis, orbitSpeed * deltaTime * 60);
-                shape.position.y += Math.sin(elapsedTime * bobSpeed + initialPosition.x) * amplitude * deltaTime * 1.5;
-                shape.rotation.x += rotationSpeed * deltaTime * 60;
-                shape.rotation.y += rotationSpeed * 0.5 * deltaTime * 60;
-                shape.rotation.z += rotationSpeed * 0.3 * deltaTime * 60;
+            // Animate Particle System 1 (Galaxy)
+            particleSystem1.rotation.y = elapsedTime * 0.008; // Slower
+            particleSystem1.rotation.x = elapsedTime * 0.004;
+
+            // Animate Particle System 2 (Dust)
+            particleSystem2.rotation.y = -elapsedTime * 0.015; // Opposite, slightly faster rotation
+            particleSystem2.rotation.z = elapsedTime * 0.006;
+
+            // Animate Shapes (Orbit, Rotate, Bob)
+            shapesGroup.children.forEach(shape => { /* ... (same animation logic) ... */
+                 const { orbitSpeed, rotationSpeed, bobSpeed, amplitude, initialY } = shape.userData;
+                 shape.position.applyAxisAngle(rotationAxis, orbitSpeed * deltaTime);
+                 shape.position.y = initialY + Math.sin(elapsedTime * bobSpeed + shape.id) * amplitude;
+                 shape.rotation.x += rotationSpeed * deltaTime; shape.rotation.y += rotationSpeed * 0.7 * deltaTime; shape.rotation.z += rotationSpeed * 0.4 * deltaTime;
             });
 
+            // Animate Stars (Orbit, Rotate, Bob)
+            starsGroup.children.forEach(star => { /* ... (same animation logic as shapes) ... */
+                 const { orbitSpeed, rotationSpeed, bobSpeed, amplitude, initialY } = star.userData;
+                 star.position.applyAxisAngle(rotationAxis, orbitSpeed * deltaTime);
+                 star.position.y = initialY + Math.sin(elapsedTime * bobSpeed + star.id * 1.1) * amplitude; // Use id for phase offset
+                 star.rotation.x += rotationSpeed * 0.8 * deltaTime; star.rotation.y += rotationSpeed * deltaTime; star.rotation.z += rotationSpeed * 0.6 * deltaTime;
+            });
+
+            // Animate Ribbons (Slow rotation)
+            ribbonsGroup.rotation.y += deltaTime * 0.02;
+            ribbonsGroup.rotation.z = Math.sin(elapsedTime * 0.2) * 0.1; // Gentle sway
+
              // Animate Text
-             if (textMesh) {
-                 textMesh.rotation.y = Math.sin(elapsedTime * 0.3) * 0.15;
-                 textMesh.position.y = Math.sin(elapsedTime * 0.5) * 1.5;
+             if (textMesh) { /* ... (same animation logic) ... */
+                 textMesh.rotation.y = Math.sin(elapsedTime * 0.35) * 0.18;
+                 textMesh.position.y = 5 + Math.sin(elapsedTime * 0.55) * 1.8; // Adjusted base Y
              }
 
              // Animate Balloons
-             balloonsGroup.children.forEach(balloon => {
+             balloonsGroup.children.forEach(balloon => { /* ... (same animation logic, check bounds) ... */
                  const ud = balloon.userData;
                  balloon.position.y += ud.baseYSpeed * deltaTime * 60;
-                 balloon.position.x += Math.sin(elapsedTime * ud.driftSpeedX + ud.initialPhaseX) * ud.driftAmplitudeX * deltaTime * 60;
-                 balloon.position.z += Math.cos(elapsedTime * ud.driftSpeedZ + ud.initialPhaseZ) * ud.driftAmplitudeZ * deltaTime * 60;
+                 const swayX = Math.sin(elapsedTime * ud.driftSpeedX + ud.initialPhaseX) * ud.driftAmplitudeX;
+                 const swayZ = Math.cos(elapsedTime * ud.driftSpeedZ + ud.initialPhaseZ) * ud.driftAmplitudeZ;
+                 balloon.position.x += swayX * deltaTime * 60;
+                 balloon.position.z += swayZ * deltaTime * 60;
                  if (balloon.position.y > balloonMaxHeight) {
-                     balloon.position.y = balloonMinHeight - Math.random() * 20;
+                     balloon.position.y = balloonMinHeight - Math.random() * 40; // Reset lower
                      balloon.position.x = (Math.random() - 0.5) * balloonSpawnArea;
                      balloon.position.z = (Math.random() - 0.5) * balloonSpawnArea;
-                     ud.initialPhaseX = Math.random() * Math.PI * 2;
-                     ud.initialPhaseZ = Math.random() * Math.PI * 2;
+                     ud.initialPhaseX = Math.random() * Math.PI * 2; ud.initialPhaseZ = Math.random() * Math.PI * 2;
                  }
              });
 
-            // Update controls
-            controls.update();
-
-            // Render using composer (includes bloom)
-            composer.render();
-            // If NOT using composer, render directly: renderer.render(scene, camera);
+            controls.update(); // Update controls
+            composer.render(); // Render via composer (includes bloom)
         }
 
         // Handle window resize
@@ -860,36 +951,36 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
-            // --- MODIFICATION: Update pixel ratio on resize too ---
             renderer.setPixelRatio(window.devicePixelRatio);
         });
 
-        // Create CSS confetti (unrelated to 3D rendering)
+        // CSS Confetti (same logic, maybe more confetti)
         function createConfetti() {
-            // ... (confetti creation code remains the same) ...
             const container = document.getElementById('confetti-container');
             if (!container) return;
-            const colors = ['#ff69b4', '#dda0dd', '#ffd700', '#9370db', '#ffffff'];
-            const count = 150;
-            container.innerHTML = ''; // Clear previous
-            for(let i = 0; i < count; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
+            const colors = [ /* ... (same colors) ... */
+                '#ff69b4', '#dda0dd', '#ffd700', '#9370db', '#ffffff', '#87cefa', '#98fb98', '#ffc0cb'
+            ];
+            const count = 250; // More confetti
+            container.innerHTML = '';
+            for(let i = 0; i < count; i++) { /* ... (same confetti element creation logic) ... */
+                const confetti = document.createElement('div'); confetti.className = 'confetti';
                 confetti.style.left = Math.random() * 100 + 'vw';
-                const isRect = Math.random() > 0.5;
-                confetti.style.width = Math.random() * (isRect ? 8 : 12) + 5 + 'px';
-                confetti.style.height = Math.random() * (isRect ? 12 : 8) + 5 + 'px';
+                const isRect = Math.random() > 0.4;
+                confetti.style.width = Math.random() * (isRect ? 7 : 10) + 4 + 'px';
+                confetti.style.height = Math.random() * (isRect ? 11 : 7) + 4 + 'px';
                 confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.opacity = Math.random() * 0.5 + 0.5;
-                confetti.style.animationDuration = Math.random() * 4 + 3 + 's';
-                confetti.style.animationDelay = Math.random() * 6 + 's';
+                confetti.style.opacity = Math.random() * 0.4 + 0.6;
+                confetti.style.animationDuration = Math.random() * 5 + 4 + 's';
+                confetti.style.animationDelay = Math.random() * 8 + 's'; // Slightly longer delay potential
+                confetti.style.transform = `rotate(${Math.random() * 120 - 60}deg)`; // More rotation
                 container.appendChild(confetti);
             }
         }
 
-        // Start
+        // Start Everything
         try {
-            createBalloons(); // Create balloons first
+            createBalloons(); // Create balloons
             animate();        // Start animation loop
             createConfetti(); // Create CSS confetti
         } catch(error) {
