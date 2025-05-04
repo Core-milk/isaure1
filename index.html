@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>致Isaure：生日星光闪耀！</title>
+
+    <!-- Embedded CSS Styles -->
+    <style>
+        /* ... (Keep all existing CSS rules - no changes needed here for this request) ... */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #ff69b4; /* Hot Pink */
+            --secondary-color: #dda0dd; /* Plum */
+            --accent-color: #ffd700; /* Gold */
+            --text-color: #f0f8ff; /* Alice Blue */
+            --bg-color-start: #1a001a; /* Deep Purple - Fallback */
+            --card-bg-color: rgba(26, 0, 26, 0.7); /* More opaque card */
+            --card-blur: 12px; /* Increased blur */
+            --glow-intensity: 0.8; /* Glow effect intensity */
+        }
+
+        html {
+            scroll-behavior: smooth;
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Serif SC', serif;
+            color: var(--text-color);
+            background-color: var(--bg-color-start);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Three.js Canvas Styling */
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            display: block;
+        }
+
+        /* Content Overlay with gradient overlay */
+        .content-overlay {
+            position: relative;
+            z-index: 1;
+            padding-top: 5vh;
+            padding-bottom: 5vh;
+        }
+
+        /* Container for centered content */
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Enhanced Content Card Styling with Stronger Shadow */
+        .content-card {
+            background: var(--card-bg-color);
+            border-radius: 20px;
+            padding: 35px 45px;
+            margin-bottom: 45px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85); /* STRONGER SHADOW */
+            backdrop-filter: blur(var(--card-blur));
+            -webkit-backdrop-filter: blur(var(--card-blur));
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            animation: fadeInCard 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            opacity: 0;
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .content-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,105,180,0.15) 0%, rgba(255,105,180,0) 65%);
+            transform: rotate(30deg) scale(0.8);
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .content-card:hover {
+            box-shadow: 0 25px 65px rgba(0, 0, 0, 0.95); /* STRONGER HOVER SHADOW */
+            transform: translateY(-5px);
+        }
+
+        .content-card:hover::before {
+            opacity: var(--glow-intensity, 0.8);
+            transform: rotate(0deg) scale(1);
+        }
+
+        /* Card Fade-in Animation */
+        @keyframes fadeInCard {
+            from { opacity: 0; transform: translateY(50px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Animation Delays */
+        .hero { animation-delay: 0.2s; }
+        .about-her { animation-delay: 0.4s; }
+        .friendship { animation-delay: 0.6s; }
+        .wishes { animation-delay: 0.8s; }
+
+        /* Enhanced Headings */
+        h1, h2, h3 {
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: calc(2.8rem + 2vw);
+            color: var(--accent-color);
+            text-shadow: 0 0 15px var(--accent-color), 0 0 30px var(--primary-color), 0 0 50px var(--primary-color);
+            margin-bottom: 15px;
+            animation: glow 2.5s infinite alternate ease-in-out;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding-bottom: 10px;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 15px var(--accent-color), 0 0 30px var(--primary-color), 0 0 45px var(--primary-color); filter: brightness(1); }
+            to { text-shadow: 0 0 25px var(--accent-color), 0 0 50px var(--primary-color), 0 0 75px var(--primary-color); filter: brightness(1.2); }
+        }
+
+        h2 {
+            font-size: calc(2rem + 1.2vw);
+            color: var(--secondary-color);
+            margin-top: 35px;
+            margin-bottom: 30px;
+            display: inline-block;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0 20px 15px;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--secondary-color), transparent);
+            border-radius: 3px;
+            opacity: 0.8;
+        }
+
+        h2::before {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, var(--secondary-color) 0%, transparent 70%);
+            filter: blur(6px);
+            opacity: 0.7;
+        }
+
+        h3 {
+            font-size: calc(1.4rem + 0.6vw);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+            color: var(--accent-color);
+        }
+
+        /* Enhanced Paragraphs and Lists */
+        p, li {
+            font-size: calc(1.05rem + 0.3vw);
+            line-height: 1.9;
+            text-align: justify;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.75);
+            margin-bottom: 20px;
+            position: relative;
+            color: var(--text-color);
+        }
+
+        /* Burstiness/Perplexity Styling */
+        .burstiness-text p:nth-child(odd) {
+            font-size: calc(1.1rem + 0.3vw);
+            margin-left: 15px;
+            letter-spacing: 0.5px;
+            padding-left: 12px;
+            border-left: 3px solid rgba(255, 105, 180, 0.4);
+        }
+        .burstiness-text p:nth-child(even) {
+            font-size: calc(1rem + 0.3vw);
+            margin-right: 15px;
+            font-style: italic;
+            opacity: 0.95;
+            padding-right: 12px;
+            border-right: 3px solid rgba(221, 160, 221, 0.4);
+        }
+        .burstiness-text p:last-child {
+             font-weight: bold;
+             color: var(--accent-color);
+             text-align: center;
+             font-size: calc(1.35rem + 0.4vw);
+             margin-top: 35px;
+             text-shadow: 0 0 15px var(--accent-color);
+             animation: pulse 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.9; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+
+        .highlight {
+            color: var(--primary-color);
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 105, 180, 0.9);
+            position: relative;
+            display: inline-block;
+            padding-bottom: 2px;
+        }
+
+        .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .highlight:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        .icon {
+            font-size: 1.5em;
+            margin-right: 8px;
+            vertical-align: -0.15em;
+            display: inline-block;
+            filter: drop-shadow(0 0 5px var(--secondary-color));
+            transition: transform 0.4s ease;
+        }
+
+        .icon:hover {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        /* Enhanced Button Style */
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 16px 35px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 30px;
+            text-align: center;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.6);
+            border: none;
+            cursor: pointer;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            font-size: 1.1em;
+            letter-spacing: 1px;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+            transition: transform 0.4s ease;
+            transform: scaleX(0);
+            transform-origin: left;
+            z-index: -1;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(221, 160, 221, 0.8);
+            color: #1a001a;
+        }
+
+        .cta-button:hover::before {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        /* Enhanced Footer Styling */
+        footer {
+             text-align: center;
+             padding: 25px 0;
+             margin-top: 40px;
+             font-size: 1em;
+             color: rgba(255, 255, 255, 0.8);
+             z-index: 2;
+             position: relative;
+             text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+             border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        footer::before {
+            content: '✨';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.6em;
+            filter: drop-shadow(0 0 6px var(--accent-color));
+            opacity: 0.9;
+            animation: footerSparkle 4s infinite ease-in-out;
+        }
+
+        @keyframes footerSparkle {
+             0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+             50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+        }
+
+        /* Floating Confetti Effect (CSS Only) */
+        #confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 15px;
+            background-color: var(--primary-color);
+            opacity: 0;
+            animation: confetti-fall 5s linear infinite;
+            transform-origin: center center;
+            will-change: transform, opacity;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-10vh) rotateZ(0deg) rotateY(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(110vh) rotateZ(720deg) rotateY(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Tablet Optimizations */
+        @media (max-width: 1024px) {
+            .container { max-width: 90%; padding: 15px; }
+            h1 { font-size: calc(2.5rem + 2.2vw); }
+            h2 { font-size: calc(1.8rem + 1.4vw); }
+            p, li { font-size: calc(1.0rem + 0.35vw); line-height: 1.85; }
+            .content-card { padding: 30px 35px; margin-bottom: 40px; }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: calc(2.3rem + 2.8vw); }
+            h2 { font-size: calc(1.6rem + 1.8vw); margin-bottom: 25px;}
+            p, li { font-size: calc(0.95rem + 0.45vw); line-height: 1.8; margin-bottom: 18px;}
+            .content-card { padding: 25px 30px; margin-bottom: 35px;}
+            .burstiness-text p:nth-child(odd) { margin-left: 10px; padding-left: 8px; }
+            .burstiness-text p:nth-child(even) { margin-right: 10px; padding-right: 8px; }
+            .cta-button { padding: 14px 30px; font-size: 1em; }
+        }
+    </style>
+
+    <!-- Import Map for Three.js Modules -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.163.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.163.0/examples/jsm/"
+            }
+        }
+    </script>
+
+</head>
+<body>
+
+    <!-- Three.js Canvas Container -->
+    <canvas id="three-canvas"></canvas>
+
+    <!-- Confetti Container (Now styled with CSS) -->
+    <div id="confetti-container"></div>
+
+    <!-- HTML Content Overlay -->
+    <div class="content-overlay">
+        <div class="container">
+
+            <!-- 生日祝福头部 -->
+            <header class="content-card hero" id="top">
+                <h1>Isaure！</h1>
+                <p style="text-align: center; font-size: 1.3em; color: var(--secondary-color); text-shadow: 0 0 10px var(--secondary-color);">今天，宇宙为你特别调亮了星辰！✨</p>
+                <p style="text-align: center; font-style: italic; font-size: 1.1em;">这绝非日历上庸常的一页翻过，<br>这是独属于你的，盛放的，<span class="highlight">光芒四射</span>的时刻！</p>
+                <h3 style="text-align: center; color: var(--accent-color); margin-top: 20px; animation: pulse 2s infinite;">生日快乐，Dear Isaure</h3>
+            </header>
+
+            <!-- 关于她的光芒 -->
+            <section class="content-card about-her burstiness-text">
+                <h2><span class="icon">☀️</span>关于你的光芒与斑斓</h2>
+                <p>你的笑靥，恰似盛夏破晓时那第一缕最无遮拦的阳光，总能轻易地融化积雪，驱散阴霾，明媚得叫人心生暖意，世界为之一亮。外向？开朗？这些词语固然捕捉了你的部分剪影，却又怎能穷尽你灵魂深处那股奔涌不息、近乎野性的生命热力！你，就像一颗蕴藏着宇宙洪荒能量的星核，时刻准备着，要爆发出最不可思议的绚烂华彩。</p>
+                <p>我知道，这世界并非总是铺满玫瑰与丝绒，这个世界带来的阴影或许曾让你步履蹒跚，留下难以言说的刻痕。但请你看看自己——看啊！那些过往的风霜，或许曾经打败了你 但我来了</p>
+                <p>而当你全然沉浸于挚爱之事——<span class="icon">🎤</span>放声歌唱时，那歌声，时而是穿透云霭的清冽山泉，流淌着抚慰人心的温柔；时而是掀起风暴的海潮，蕴含着震撼灵魂的力量，每一个音符都仿佛被赋予了生命，在空气中舞蹈、回旋。<span class="icon">🎨</span>挥动画笔时，你的指尖便拥有了点石成金的魔法，色彩在你手中不再仅仅是颜料，它们是情绪的载体，是梦想的碎片，是你在画布上构建的一个又一个平行宇宙，那里光风霁月，鸟语花香，是你内心深处不灭的理想国。</p>
+                <p>你的才华，不是孤芳自赏的水仙，而是黑夜中指引航船的灯塔，既照亮了自己前行的路，也温暖了所有靠近你的人。</p>
+            </section>
+
+            <!-- 我们的友谊 -->
+            <section class="content-card friendship burstiness-text">
+                <h2><span class="icon">💖</span>我们之间，是超越定义的羁绊</h2>
+                <p>我们曾并肩作战、抵御风浪的同袍，那些一起熬过的夜，一起攻克的难关，都已化作彼此心中无需言说的默契；我们更是交换心事、分享脆弱的知己，那些深夜月光下的窃窃私语，那些只有我们才懂的梗和瞬间，早已成为灵魂深处最温暖的秘藏。知道吗？无论顺境逆旅，总有一个角落为你留着，总有一个声音对你说："我永远懂你 抱抱"</p>
+                <p>是你，教会我释放压力；也是你，让我深刻体会到，即便身处幽谷，也要永远向着阳光的方向，倔强生长。你在我绝望的时候从深渊中把我拉起，甚至不惜自己。这份友谊，它坚韧过最硬的钻石，温暖过冬日的炉火，纯粹过初生的朝露——能遇见你，是我此生何其幸運的恩典。真的，千言万语，汇成一句：谢谢你，出现在我的生命里！</p>
+                <p>这份情谊，早已超越"友谊"二字的简单界定，它是一种深刻、复杂的的连接，一种灵魂的回响，在岁月的长河里熠熠生辉，历久弥坚。</p>
+            </section>
+
+            <!-- 温柔的鼓励与祝福 -->
+            <section class="content-card wishes burstiness-text">
+                <h2><span class="icon">🌟</span>愿你的世界，从此晴空万里，繁花似锦</h2>
+                <p>Dear Isaure，我知道的，生活这本厚重的书，并非每一页都写满了诗情画意。那些不期而至的风雨，那些沉甸甸压在心头的往事，或许让你感到疲惫，甚至偶有瞬间的黯淡。但请你务必坚信——你内在蕴藏的那束光，那独一无二的灵魂火焰，从未有熄灭！即便他似乎快要熄灭了，我哪怕将自己作为那些豆萁，也要将你推向美好的未来。</p>
+                <p>过去的伤痕，它们塑造了你的一部分，却绝不能定义你的全部！你那颗强大而温柔的心，你对艺术与美的执着热爱，你创造快乐、感染他人的非凡能力——这，这才是你最真实、最宝贵的内核！是那个唱歌时眼里有星河璀璨，画画时指尖有蝶舞翩跹的你！不要，永远不要让任何阴霾遮蔽了你眺望远方的视线。你看，前方是多么辽阔无垠的天地，正等待你用最嘹亮的歌声去回应，用最绚烂的色彩去描绘！去拥抱！去征服！</p>
+                <p>所以，今天，这个特殊的日子，以及未来每一个值得庆祝的平凡瞬间，请你<span class="highlight">无所顾忌地放声歌唱吧！淋漓尽致地挥洒你的色彩吧！</span>去做一切能点燃你热情、让你心跳漏掉半拍、让你嘴角不自觉上扬的事情！勇敢去爱，热烈去感受，大胆去创造，书写只属于你的、独一无二的生命传奇！</p>
+                <p>愿快乐从此成为你的日常标配，像空气一样无处不在；愿温暖时刻将你紧紧环绕，如同最贴身的拥抱；愿世间所有不期而遇的美好，都争先恐后地向你奔涌而来，汇聚成幸福的海洋！愿你的每一天，都充满意想不到的惊喜与不容置疑的好运！<br>生日快乐，我心中无可替代的Isaure！<br>愿你的世界，自此只有斑斓色彩，再无一丝阴霾！</p>
+                <div style="text-align: center;">
+                    <a href="#top" class="cta-button" onclick="document.getElementById('top').scrollIntoView({ behavior: 'smooth' }); return false;">回到星光之巅！</a>
+                </div>
+            </section>
+
+            <!-- 页脚 -->
+             <footer>
+                用漫天星辰作墨，写下这份祝福，<br>
+                送给独一无二的你，我最好的朋友。
+            </footer>
+             <p style="font-size: 0.65em; /* 调整为你想要的精确大小 */
+                      color: rgba(255, 255, 255, 0.7); /* 白色带一点透明 */
+                      text-align: center;
+                      margin-top: 20px; /* 与页脚的距离 */
+                      padding-bottom: 15px; /* 距离页面底部的距离 */
+                      opacity: 0.8; /* 轻微透明 */
+                      letter-spacing: 0.5px; /* 轻微增加字间距 */
+                      position: relative; /* 确保在canvas之上 */
+                      z-index: 2;">
+                最后 You're the only one I want to give the most affection to.
+            </p>
+        </div>
+    </div>
+
+    <!-- Embedded Three.js Script (Module Type) -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+
+        // Scene Setup
+        const scene = new THREE.Scene();
+        const canvas = document.getElementById('three-canvas');
+        let renderer, composer, bloomPass;
+        let textMesh = null;
+
+        try {
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true, // Enable basic anti-aliasing
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            // --- MODIFICATION: Use full device pixel ratio for potentially higher res rendering ---
+            // Note: Can impact performance on high-DPI screens. Keep Math.min(..., 2) for balance if needed.
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.outputEncoding = THREE.sRGBEncoding; // Correct color space
+            renderer.toneMapping = THREE.ACESFilmicToneMapping; // Better contrast and highlights
+            renderer.toneMappingExposure = 1.2;
+
+            // --- MODIFICATION: Enable Shadow Mapping ---
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadow edges
+
+        } catch (error) {
+            console.error("WebGL is not supported or renderer initialization failed:", error);
+            const overlay = document.querySelector('.content-overlay');
+            if (overlay) overlay.style.display = 'none';
+            document.body.innerHTML = "<div style='color:white; text-align:center; padding: 50px; font-size: 1.2em; font-family: sans-serif;'>抱歉，您的设备似乎不支持创建这个3D效果所需的技术(WebGL)。<br>但这份生日祝福的心意不变！生日快乐，Isaure！</div>" + (overlay ? overlay.outerHTML : '');
+            if(canvas) canvas.style.display = 'none';
+            throw new Error("Renderer failed to initialize.");
+        }
+
+        // Camera
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 15, 70);
+
+        // Enhanced Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.04;
+        controls.enableZoom = true;
+        controls.zoomSpeed = 0.6;
+        controls.enablePan = false; // Keep pan disabled for this effect
+        controls.minDistance = 25;
+        controls.maxDistance = 180;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.4;
+        controls.maxPolarAngle = Math.PI * 0.85;
+        controls.minPolarAngle = Math.PI * 0.15;
+
+        // Enhanced Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Slightly reduced ambient intensity
+        scene.add(ambientLight);
+
+        const pointLight1 = new THREE.PointLight(0xff69b4, 450, 350, 1.8); // Pink
+        pointLight1.position.set(80, 60, 80);
+        // --- MODIFICATION: Enable Shadow Casting for this light ---
+        pointLight1.castShadow = true;
+        pointLight1.shadow.mapSize.width = 1024; // Shadow map resolution (power of 2)
+        pointLight1.shadow.mapSize.height = 1024;
+        pointLight1.shadow.camera.near = 10;    // Adjust shadow camera frustum
+        pointLight1.shadow.camera.far = 400;
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0xdda0dd, 350, 300, 1.8); // Plum
+        pointLight2.position.set(-80, -60, 60);
+        // pointLight2.castShadow = true; // Optional: Enable shadows for more lights (costly)
+        scene.add(pointLight2);
+
+        const pointLight3 = new THREE.PointLight(0xffd700, 300, 300, 1.8); // Gold
+        pointLight3.position.set(0, -70, 120);
+        // pointLight3.castShadow = true; // Optional
+        scene.add(pointLight3);
+
+        // Add light halos (these don't cast shadows)
+        const lightHalo1 = createLightHalo(0xff69b4, 18);
+        lightHalo1.position.copy(pointLight1.position);
+        scene.add(lightHalo1);
+        const lightHalo2 = createLightHalo(0xdda0dd, 15);
+        lightHalo2.position.copy(pointLight2.position);
+        scene.add(lightHalo2);
+        const lightHalo3 = createLightHalo(0xffd700, 12);
+        lightHalo3.position.copy(pointLight3.position);
+        scene.add(lightHalo3);
+
+        function createLightHalo(color, size) {
+            const geometry = new THREE.SphereGeometry(size, 32, 16);
+            const material = new THREE.MeshBasicMaterial({ // Basic material ignores light/shadow
+                color: color,
+                transparent: true,
+                opacity: 0.15,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            return new THREE.Mesh(geometry, material);
+        }
+
+        // Post-processing Effects
+        composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.3, // strength
+            0.5, // radius
+            0.75 // threshold
+        );
+        composer.addPass(bloomPass);
+
+
+        // Create a galaxy of particles (Particles generally don't cast/receive shadows well)
+        const particleCount = 15000;
+        const particlesGeometry = new THREE.BufferGeometry();
+        const posArray = new Float32Array(particleCount * 3);
+        const colorArray = new Float32Array(particleCount * 3);
+        const sizeArray = new Float32Array(particleCount);
+
+        const colorPalette = [
+            new THREE.Color(0xff69b4), new THREE.Color(0xdda0dd), new THREE.Color(0xffd700),
+            new THREE.Color(0x9370db), new THREE.Color(0xffffff)
+        ];
+
+        for(let i = 0; i < particleCount; i++) {
+            // ... (particle position, color, size calculation - same as before) ...
+            const i3 = i * 3;
+            const radius = 180 + Math.random() * 400;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            posArray[i3] = radius * Math.sin(phi) * Math.cos(theta);
+            posArray[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            posArray[i3 + 2] = radius * Math.cos(phi);
+            const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+            const finalColor = Math.random() < 0.3 ? (Math.random() < 0.5 ? colorPalette[4] : colorPalette[2]) : color;
+            colorArray[i3] = finalColor.r;
+            colorArray[i3 + 1] = finalColor.g;
+            colorArray[i3 + 2] = finalColor.b;
+            sizeArray[i] = Math.random() * 2.8 + 0.7;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+        particlesGeometry.setAttribute('size', new THREE.BufferAttribute(sizeArray, 1));
+
+        const particleMaterial = new THREE.PointsMaterial({
+            vertexColors: true,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            sizeAttenuation: true,
+            map: createSparkleTexture(),
+            depthWrite: false, // Important for blending
+            alphaTest: 0.01
+        });
+
+        const particleSystem = new THREE.Points(particlesGeometry, particleMaterial);
+        scene.add(particleSystem);
+
+        // Create floating 3D text
+        const textLoader = new FontLoader();
+        textLoader.load(
+            'https://unpkg.com/three@0.163.0/examples/fonts/helvetiker_regular.typeface.json',
+            function ( font ) {
+                const textGeometry = new TextGeometry( 'Happy Birthday', {
+                    font: font,
+                    size: 8,
+                    height: 1.5, // Depth of the text
+                    curveSegments: 16, // Increased smoothness
+                    bevelEnabled: true,
+                    bevelThickness: 0.6,
+                    bevelSize: 0.3,
+                    bevelOffset: 0,
+                    bevelSegments: 8 // Increased bevel smoothness
+                });
+                textGeometry.center(); // Center the geometry origin
+                // --- MODIFICATION: Use MeshStandardMaterial for light interaction ---
+                const textMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xff69b4, // Base color
+                    emissive: 0xdda0dd, // Glow color
+                    emissiveIntensity: 0.3, // Reduced intensity, let light do more work
+                    metalness: 0.4, // Make it slightly metallic
+                    roughness: 0.5, // Control shininess
+                });
+                textMesh = new THREE.Mesh( textGeometry, textMaterial );
+                textMesh.position.set(0, 0, -20); // Position closer to camera
+                // --- MODIFICATION: Enable Shadow Casting for Text ---
+                textMesh.castShadow = true;
+                // textMesh.receiveShadow = true; // Optional: text can receive shadows too
+                scene.add( textMesh );
+            },
+            function ( xhr ) { console.log( (xhr.loaded / xhr.total * 100) + '% font loaded' ); },
+            function ( err ) { console.error( 'An error happened during font loading:', err ); }
+        );
+
+
+        // Create floating shapes (True 3D Models)
+        const shapesGroup = new THREE.Group();
+        const shapeGeometries = [
+             new THREE.IcosahedronGeometry(3.5, 1), // Increased detail
+             new THREE.TorusKnotGeometry(2.5, 0.8, 128, 16), // Increased detail
+             new THREE.OctahedronGeometry(3, 1) // Increased detail
+             // Add more complex geometries if desired:
+             // new THREE.DodecahedronGeometry(3, 0),
+             // new THREE.TorusGeometry(2.5, 1, 16, 100)
+        ];
+        const shapesCount = 35;
+
+        for(let i = 0; i < shapesCount; i++) {
+             const geometry = shapeGeometries[i % shapeGeometries.length];
+             // --- MODIFICATION: Consistently use MeshStandardMaterial ---
+             const material = new THREE.MeshStandardMaterial({
+                color: colorPalette[Math.floor(Math.random() * colorPalette.length)],
+                // emissive: 0x050505, // Very slight self-glow if desired
+                metalness: Math.random() * 0.6, // Variable metalness
+                roughness: Math.random() * 0.7 + 0.1, // Variable roughness (0=shiny, 1=matte)
+                transparent: true,
+                opacity: 0.88 + Math.random() * 0.12, // Slightly less transparent
+                // wireframe: Math.random() > 0.9 // Less wireframe, make them solid
+            });
+            const shape = new THREE.Mesh(geometry, material);
+            const radius = 50 + Math.random() * 80;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            shape.position.set(
+                radius * Math.sin(phi) * Math.cos(theta),
+                radius * Math.sin(phi) * Math.sin(theta),
+                radius * Math.cos(phi)
+            );
+
+            // --- MODIFICATION: Enable Shadow Casting for Shapes ---
+            shape.castShadow = true;
+            // shape.receiveShadow = true; // Optional: shapes can receive shadows (can be costly)
+
+            shape.userData = {
+                orbitSpeed: (Math.random() - 0.5) * 0.01,
+                rotationSpeed: (Math.random() - 0.5) * 0.025,
+                bobSpeed: Math.random() * 0.8 + 0.4,
+                amplitude: Math.random() * 4 + 2,
+                initialPosition: shape.position.clone()
+            };
+            shapesGroup.add(shape);
+        }
+        scene.add(shapesGroup);
+
+        // --- Balloons Setup ---
+        const balloonsGroup = new THREE.Group();
+        const balloonCount = 25;
+        const balloonColors = [0xff69b4, 0xdda0dd, 0xffd700, 0x87cefa, 0x98fb98];
+        const balloonSpawnArea = 150;
+        const balloonMaxHeight = 250;
+        const balloonMinHeight = -150;
+
+        // --- Create Balloons Function ---
+        function createBalloons() {
+            const balloonGeometry = new THREE.SphereGeometry(2.5, 32, 24); // Increased segments
+            balloonGeometry.scale(1, 1.25, 1); // Slightly taller
+
+            for (let i = 0; i < balloonCount; i++) {
+                 // --- MODIFICATION: Use MeshStandardMaterial for better lighting ---
+                const balloonMaterial = new THREE.MeshStandardMaterial({
+                    color: balloonColors[Math.floor(Math.random() * balloonColors.length)],
+                    metalness: 0.1,  // Less metallic than shapes
+                    roughness: 0.6,  // Rougher surface, less shiny like rubber/plastic
+                    transparent: true,
+                    opacity: 0.9, // Slightly more opaque
+                    // emissive: 0x080808, // Tiny bit of self light if desired
+                });
+
+                const balloon = new THREE.Mesh(balloonGeometry, balloonMaterial);
+
+                balloon.position.x = (Math.random() - 0.5) * balloonSpawnArea;
+                balloon.position.z = (Math.random() - 0.5) * balloonSpawnArea;
+                balloon.position.y = balloonMinHeight + Math.random() * 100;
+
+                // --- MODIFICATION: Enable Shadow Casting for Balloons ---
+                balloon.castShadow = true;
+                // balloon.receiveShadow = true; // Optional
+
+                balloon.userData = {
+                    baseYSpeed: Math.random() * 0.08 + 0.05,
+                    driftSpeedX: Math.random() * 0.5 + 0.2,
+                    driftSpeedZ: Math.random() * 0.5 + 0.2,
+                    driftAmplitudeX: Math.random() * 0.05 + 0.02,
+                    driftAmplitudeZ: Math.random() * 0.05 + 0.02,
+                    initialPhaseX: Math.random() * Math.PI * 2,
+                    initialPhaseZ: Math.random() * Math.PI * 2
+                };
+
+                balloonsGroup.add(balloon);
+            }
+            scene.add(balloonsGroup);
+        }
+
+
+        // Helper function to create particle texture
+        function createSparkleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; // Good resolution
+            canvas.height = 128;
+            const context = canvas.getContext('2d');
+            if (!context) return null;
+            const gradient = context.createRadialGradient(64, 64, 0, 64, 64, 64);
+            gradient.addColorStop(0, 'rgba(255,255,255,1)');
+            gradient.addColorStop(0.15, 'rgba(255,255,255,0.9)');
+            gradient.addColorStop(0.4, 'rgba(255,255,255,0.3)');
+            gradient.addColorStop(1, 'rgba(255,255,255,0)');
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 128, 128);
+            const texture = new THREE.Texture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        // Animation loop
+        const clock = new THREE.Clock();
+        const rotationAxis = new THREE.Vector3(0, 1, 0);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+            const deltaTime = clock.getDelta();
+
+            // Animate Particles
+            particleSystem.rotation.y = elapsedTime * 0.015;
+            particleSystem.rotation.x = elapsedTime * 0.008;
+
+            // Animate Shapes
+            shapesGroup.children.forEach(shape => {
+                const { orbitSpeed, rotationSpeed, bobSpeed, amplitude, initialPosition } = shape.userData;
+                shape.position.applyAxisAngle(rotationAxis, orbitSpeed * deltaTime * 60);
+                shape.position.y += Math.sin(elapsedTime * bobSpeed + initialPosition.x) * amplitude * deltaTime * 1.5;
+                shape.rotation.x += rotationSpeed * deltaTime * 60;
+                shape.rotation.y += rotationSpeed * 0.5 * deltaTime * 60;
+                shape.rotation.z += rotationSpeed * 0.3 * deltaTime * 60;
+            });
+
+             // Animate Text
+             if (textMesh) {
+                 textMesh.rotation.y = Math.sin(elapsedTime * 0.3) * 0.15;
+                 textMesh.position.y = Math.sin(elapsedTime * 0.5) * 1.5;
+             }
+
+             // Animate Balloons
+             balloonsGroup.children.forEach(balloon => {
+                 const ud = balloon.userData;
+                 balloon.position.y += ud.baseYSpeed * deltaTime * 60;
+                 balloon.position.x += Math.sin(elapsedTime * ud.driftSpeedX + ud.initialPhaseX) * ud.driftAmplitudeX * deltaTime * 60;
+                 balloon.position.z += Math.cos(elapsedTime * ud.driftSpeedZ + ud.initialPhaseZ) * ud.driftAmplitudeZ * deltaTime * 60;
+                 if (balloon.position.y > balloonMaxHeight) {
+                     balloon.position.y = balloonMinHeight - Math.random() * 20;
+                     balloon.position.x = (Math.random() - 0.5) * balloonSpawnArea;
+                     balloon.position.z = (Math.random() - 0.5) * balloonSpawnArea;
+                     ud.initialPhaseX = Math.random() * Math.PI * 2;
+                     ud.initialPhaseZ = Math.random() * Math.PI * 2;
+                 }
+             });
+
+            // Update controls
+            controls.update();
+
+            // Render using composer (includes bloom)
+            composer.render();
+            // If NOT using composer, render directly: renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            // --- MODIFICATION: Update pixel ratio on resize too ---
+            renderer.setPixelRatio(window.devicePixelRatio);
+        });
+
+        // Create CSS confetti (unrelated to 3D rendering)
+        function createConfetti() {
+            // ... (confetti creation code remains the same) ...
+            const container = document.getElementById('confetti-container');
+            if (!container) return;
+            const colors = ['#ff69b4', '#dda0dd', '#ffd700', '#9370db', '#ffffff'];
+            const count = 150;
+            container.innerHTML = ''; // Clear previous
+            for(let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                const isRect = Math.random() > 0.5;
+                confetti.style.width = Math.random() * (isRect ? 8 : 12) + 5 + 'px';
+                confetti.style.height = Math.random() * (isRect ? 12 : 8) + 5 + 'px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.opacity = Math.random() * 0.5 + 0.5;
+                confetti.style.animationDuration = Math.random() * 4 + 3 + 's';
+                confetti.style.animationDelay = Math.random() * 6 + 's';
+                container.appendChild(confetti);
+            }
+        }
+
+        // Start
+        try {
+            createBalloons(); // Create balloons first
+            animate();        // Start animation loop
+            createConfetti(); // Create CSS confetti
+        } catch(error) {
+             console.error("Error starting animation or effects:", error);
+             // Fallback handled during renderer init
+        }
+
+    </script>
+
+</body>
+</html>
